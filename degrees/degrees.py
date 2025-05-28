@@ -21,11 +21,13 @@ def load_data(directory):
     with open(f"{directory}/people.csv", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            # fill people dictionary
             people[row["id"]] = {
                 "name": row["name"],
                 "birth": row["birth"],
                 "movies": set()
             }
+            # fill names dictionary
             if row["name"].lower() not in names:
                 names[row["name"].lower()] = {row["id"]}
             else:
@@ -35,6 +37,7 @@ def load_data(directory):
     with open(f"{directory}/movies.csv", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            # fill names dictionary
             movies[row["id"]] = {
                 "title": row["title"],
                 "year": row["year"],
@@ -46,7 +49,9 @@ def load_data(directory):
         reader = csv.DictReader(f)
         for row in reader:
             try:
+                # fill movies dictionary in people dictionary
                 people[row["person_id"]]["movies"].add(row["movie_id"])
+                # fill stars dictionary in movies dictionary
                 movies[row["movie_id"]]["stars"].add(row["person_id"])
             except KeyError:
                 pass
@@ -134,6 +139,10 @@ def neighbors_for_person(person_id):
             neighbors.add((movie_id, person_id))
     return neighbors
 
-
+"""
+This construct is particularly useful for organizing code and ensuring 
+that certain parts of your script (like tests or main logic) 
+don't run unintentionally when the file is imported elsewhere.
+"""
 if __name__ == "__main__":
     main()

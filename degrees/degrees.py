@@ -67,9 +67,11 @@ def main():
     load_data(directory)
     print("Data loaded.")
 
+    # source
     source = person_id_for_name(input("Name: "))
     if source is None:
         sys.exit("Person not found.")
+    # target
     target = person_id_for_name(input("Name: "))
     if target is None:
         sys.exit("Person not found.")
@@ -97,7 +99,7 @@ def shortest_path(source, target):
     If no possible path, returns None.
     """
 
-    # TODO
+    # TODO    
     raise NotImplementedError
 
 
@@ -106,9 +108,12 @@ def person_id_for_name(name):
     Returns the IMDB id for a person's name,
     resolving ambiguities as needed.
     """
+    # person_ids list to store all sets of actors' ids with the given name in names dictionary
     person_ids = list(names.get(name.lower(), set()))
+    # If no person_ids found, return None
     if len(person_ids) == 0:
         return None
+    # If more than one person_id found, prompt the user to choose one
     elif len(person_ids) > 1:
         print(f"Which '{name}'?")
         for person_id in person_ids:
@@ -123,6 +128,7 @@ def person_id_for_name(name):
         except ValueError:
             pass
         return None
+    # If only one person_id found, return it = the first element of person_ids list
     else:
         return person_ids[0]
 
@@ -132,12 +138,15 @@ def neighbors_for_person(person_id):
     Returns (movie_id, person_id) pairs for people
     who starred with a given person.
     """
+    # movie_ids are the commmon ground to identify the neighbors
+    # use inputted person_id to map with key in from movies table to find movie_ids
     movie_ids = people[person_id]["movies"]
     neighbors = set()
     for movie_id in movie_ids:
+        # use collected movie_ids to find the appropriate data pairs from stars table
         for person_id in movies[movie_id]["stars"]:
             neighbors.add((movie_id, person_id))
-    return neighbors
+    return neighbors    
 
 """
 This construct is particularly useful for organizing code and ensuring 

@@ -80,7 +80,8 @@ class Maze():
 
         self.solution = None
 
-
+    # prints the maze with the solution if it exists
+    # A = start, B = goal, █ = wall, * = solution
     def print(self):
         solution = self.solution[1] if self.solution is not None else None
         print()
@@ -99,7 +100,8 @@ class Maze():
             print()
         print()
 
-
+    # Returns a list of valid neighboring states for a given state.
+    # Each neighbor is a tuple of (action, (row, col)).
     def neighbors(self, state):
         row, col = state
         candidates = [
@@ -115,7 +117,9 @@ class Maze():
                 result.append((action, (r, c)))
         return result
 
-
+    # Finds a solution to the maze using search algorithms.
+    # If frontier is a StackFrontier, it uses depth-first search.
+    # If frontier is a QueueFrontier, it uses breadth-first search.
     def solve(self):
         """Finds a solution to maze, if one exists."""
 
@@ -124,7 +128,7 @@ class Maze():
 
         # Initialize frontier to just the starting position
         start = Node(state=self.start, parent=None, action=None)
-        frontier = QueueFrontier() # StackFrontier()
+        frontier = StackFrontier() # QueueFrontier()
         frontier.add(start)
 
         # Initialize an empty explored set

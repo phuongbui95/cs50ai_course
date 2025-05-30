@@ -6,7 +6,7 @@ class Node():
         self.parent = parent
         self.action = action
 
-
+# Depth-First Search (DFS)
 class StackFrontier():
     def __init__(self):
         self.frontier = []
@@ -20,22 +20,28 @@ class StackFrontier():
     def empty(self):
         return len(self.frontier) == 0
 
+    # Remove the last node added (LIFO)
     def remove(self):
         if self.empty():
             raise Exception("empty frontier")
         else:
+            # pick the last node added
             node = self.frontier[-1]
+            # # update the frontier without the last node = remove it from the frontier
             self.frontier = self.frontier[:-1]
             return node
 
-
+# Breadth-First Search (BFS)
+# This class inherits from StackFrontier, but uses a queue instead of a stack.
 class QueueFrontier(StackFrontier):
-
+    # Remove the first node added (FIFO)
     def remove(self):
         if self.empty():
             raise Exception("empty frontier")
         else:
+            # pick the first node added
             node = self.frontier[0]
+            # update the frontier without the first node = remove it from the frontier
             self.frontier = self.frontier[1:]
             return node
 

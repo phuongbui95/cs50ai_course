@@ -67,11 +67,11 @@ def main():
     load_data(directory)
     print("Data loaded.")
 
-    # source
+    # source => return value in person_id format
     source = person_id_for_name(input("Name: "))
     if source is None:
         sys.exit("Person not found.")
-    # target
+    # target => return value in person_id format
     target = person_id_for_name(input("Name: "))
     if target is None:
         sys.exit("Person not found.")
@@ -99,54 +99,46 @@ def shortest_path(source, target):
     If no possible path, returns None.
     """
 
-    # # TODO    
-    # raise NotImplementedError
-
-    # Keep track of number of states explored
-    self.num_explored = 0
-
-    # Initialize frontier to just the starting position
-    start = Node(state=self.start, parent=None, action=None)
+    # Initialize frontier to just the starting position => source
+    start = Node(state=source, parent=None, action=None)
     frontier = QueueFrontier() # Queue is used for Breadth-First Search
     frontier.add(start)
 
     # Initialize an empty explored set
-    self.explored = set()
-
+    explored = set()
+       
     # Keep looping until solution found
     while True:
 
         # If nothing left in frontier, then no path
         if frontier.empty():
-            raise Exception("no solution")
+            raise None
 
         # Choose a node from the frontier
         node = frontier.remove()
-        self.num_explored += 1
 
-        # If node is the goal, then we have a solution
-        if node.state == self.goal:
-            actions = []
-            cells = []
+        # If node is the goal, then we have a solution as a path => target
+        if node.state == target:
+            path = []
+            # Backtrack to construct the path
             while node.parent is not None:
-                actions.append(node.action)
-                cells.append(node.state)
+                path.append((node.action, node.state))
                 node = node.parent
-            actions.reverse()
-            cells.reverse()
-            self.solution = (actions, cells)
-            return
+            path.reverse()
+            return path
 
         # Mark node as explored
-        self.explored.add(node.state)
+        explored.add(node.state)
 
         # Add neighbors to frontier
-        for action, state in self.neighbors(node.state):
-            if not frontier.contains_state(state) and state not in self.explored:
-                child = Node(state=state, parent=node, action=action)
+        for movie_id, person_id in neighbors_for_person(node.state):
+            if not frontier.contains_state(person_id) and person_id not in explored:
+                child = Node(
+                    state=person_id,    # The new actor we're moving to
+                    parent=node,        # Previous actor's node
+                    action=movie_id     # The movie that connects them
+                )
                 frontier.add(child)
-
-
 
 def person_id_for_name(name):
     """

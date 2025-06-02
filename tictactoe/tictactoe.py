@@ -3,19 +3,21 @@ Tic Tac Toe Player
 """
 
 import math
+from copy import deepcopy
 
 X = "X"
 O = "O"
 EMPTY = None
 
+board_version = []
 
 def initial_state():
     """
     Returns starting state of the board.
     """
-    return [[EMPTY, EMPTY, EMPTY],
-            [EMPTY, EMPTY, EMPTY],
-            [EMPTY, EMPTY, EMPTY]]
+    return [[EMPTY, X, EMPTY],
+            [O, X, O],
+            [EMPTY, X, EMPTY]]
 
 
 def player(board):
@@ -23,28 +25,33 @@ def player(board):
     Returns player who has the next turn on a board.
     """
     # Count the number of X's and O's on the board
-    x_count = sum(row.count(X) for row in board)
-    o_count = sum(row.count(O) for row in board)
-    
+    x_count = 0
+    o_count = 0
+    for row in range(len(board)):
+        for col in range(len(board[row])):
+            if board[row][col] == X:
+                x_count += 1
+            elif board[row][col] == O:
+                o_count += 1
+
     # Remember X is always the first player
-    if terminal(board) == False: # game is NOT over
-        return X if x_count == 0 or x_count == o_count else return O
-    
-    return
-    # raise NotImplementedError
+    if not terminal(board):
+        return X if x_count == 0 or x_count == o_count else O
+    return None
 
 
 def actions(board):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
-    available_actions = set()
-    if terminal(board) == False: # game is in progress
-        for i,j in enumerate(board):
-            available_actions.add((i,j)) if board[i][j] == EMPTY
+    all_actions = set()
+    if not terminal(board): # game is in progress
+        for row in range(len(board)):
+            for col in range(len(board[row])):
+                if board[row][col] == EMPTY:
+                    all_actions.add((row,col)) 
 
-    return available_actions            
-    # raise NotImplementedError
+    return all_actions            
 
 
 # actions function is needed
@@ -55,10 +62,17 @@ def result(board, action):
     """
 
     # deep copy the board before adding new action
+    original_board = deepcopy(board)
+    board_version.append(original_board)
 
-    # udpate new action = the last element of the actions set
+    # udpate new action
+    if action not in actions(board):
+        raise ValueError(f"Invalid action: {action}")
+    else:
+        actions(board).remove(action)
+        board[action[0]][action[1]] = player(board)
 
-    raise NotImplementedError
+    return board
 
 # result function is needed
 def winner(board):
@@ -67,23 +81,45 @@ def winner(board):
     """
 
     # Count the number of X's and O's on the board
-    x_count = sum(row.count(X) for row in board)
-    o_count = sum(row.count(O) for row in board)
-    empty_count = sum(row.count(EMPTY) for row in board)
+    
     
     # if winner, else none
-    # X is the winner (x_count>=3)
-    # O is the winner (o_count>=3)
+    # start to track from the last element of the board's result
+    current_player = player(board)
+    checking_player = O
+    if current_player == O:
+        checking_player = X
+
+    board_size = len(board)
+    if not terminal(board):
+        # check the row
+        for row in range(len(board)):
+            if all(cell == potential_winner for cell in board[row]):
+                return checking_player
+        # check the column
+        for col in range(len(board[0])): # only 3
+            if all(board[row][col] == checking_player for row in range(board_size)):
+                return checking_player
+        # Check primary diagonal
+        if all(board[i][i] == checking_player for i in range(board_size)):
+            return checking_player
+        # Check secondary diagonal
+        if all(board[i][board_size - 1 - i] == checking_player for i in range(board_size)):
+            return checking_player
+        # Tie
+        return None
+    return None
 
 
-    raise NotImplementedError
-
+    # raise NotImplementedError
 
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-    raise NotImplementedError
+
+    return False #just to pass for testing other functions
+    # raise NotImplementedError
 
 
 def utility(board):
@@ -99,3 +135,22 @@ def minimax(board):
     # This is the machine's turn
     """
     raise NotImplementedError
+
+
+# test functions
+if __name__ == "__main__":
+    # Test player
+    board = initial_state()
+    print(f"Current player: {player(board)}")
+    
+    # Test actions
+    print(f"Possible actions: {actions(board)}")
+
+    # Test result
+    print(f"New board: {result(board, (1,1))}")
+    print(f"Old board: {board_version}")
+    print(f"Current board: {board}")
+
+    
+    # Test winner
+    print(f"Winner: {winner(board)}")

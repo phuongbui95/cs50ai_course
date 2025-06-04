@@ -15,9 +15,9 @@ def initial_state():
     """
     Returns starting state of the board.
     """
-    return [[EMPTY, X, EMPTY],
-            [O, X, O],
-            [EMPTY, X, EMPTY]]
+    return [[O, O, X],
+            [X, X, O],
+            [O, X, X]]
 
 
 def player(board):
@@ -35,9 +35,7 @@ def player(board):
                 o_count += 1
 
     # Remember X is always the first player
-    if not terminal(board):
-        return X if x_count == 0 or x_count == o_count else O
-    return None
+    return X if x_count == 0 or x_count == o_count else O
 
 
 def actions(board):
@@ -45,11 +43,10 @@ def actions(board):
     Returns set of all possible actions (i, j) available on the board.
     """
     all_actions = set()
-    if not terminal(board): # game is in progress
-        for row in range(len(board)):
-            for col in range(len(board[row])):
-                if board[row][col] == EMPTY:
-                    all_actions.add((row,col)) 
+    for row in range(len(board)):
+        for col in range(len(board[row])):
+            if board[row][col] == EMPTY:
+                all_actions.add((row,col)) 
 
     return all_actions            
 
@@ -74,59 +71,57 @@ def result(board, action):
 
     return board
 
-# result function is needed
+
 def winner(board):
     """
     Returns the winner of the game, if there is one.
-    """
-
-    # Count the number of X's and O's on the board
-    
-    
-    # if winner, else none
-    # start to track from the last element of the board's result
-    current_player = player(board)
-    checking_player = O
-    if current_player == O:
-        checking_player = X
-
+    """      
     board_size = len(board)
-    if not terminal(board):
-        # check the row
-        for row in range(len(board)):
-            if all(cell == potential_winner for cell in board[row]):
-                return checking_player
-        # check the column
-        for col in range(len(board[0])): # only 3
-            if all(board[row][col] == checking_player for row in range(board_size)):
-                return checking_player
-        # Check primary diagonal
-        if all(board[i][i] == checking_player for i in range(board_size)):
-            return checking_player
-        # Check secondary diagonal
-        if all(board[i][board_size - 1 - i] == checking_player for i in range(board_size)):
-            return checking_player
-        # Tie
-        return None
+    
+    for player in [X, O]:
+        # check rows
+        for row in range(board_size):
+            if all(cell == player for cell in board[row]):
+                return player
+                
+        # check columns
+        for col in range(board_size): 
+            if all(board[row][col] == player for row in range(board_size)):
+                return player
+                
+        # Check diagonals
+        if all(board[i][i] == player for i in range(board_size)):
+            return player
+            
+        if all(board[i][board_size - 1 - i] == player for i in range(board_size)):
+            return player
+            
     return None
-
-
-    # raise NotImplementedError
 
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-
-    return False #just to pass for testing other functions
-    # raise NotImplementedError
+    # Check for winner
+    if winner(board) is not None:
+        return True
+        
+    # Check if board is full
+    return all(cell is not EMPTY for row in board for cell in row)
 
 
 def utility(board):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    raise NotImplementedError
+    if terminal(board):
+        if winner(board) == X:
+            return 1
+        elif winner(board) == O:
+            return -1
+        else:
+            return 0
+    return None
 
 
 def minimax(board):
@@ -141,16 +136,21 @@ def minimax(board):
 if __name__ == "__main__":
     # Test player
     board = initial_state()
-    print(f"Current player: {player(board)}")
+    # print(f"Current player: {player(board)}")
     
-    # Test actions
-    print(f"Possible actions: {actions(board)}")
+    # # Test actions
+    # print(f"Possible actions: {actions(board)}")
 
     # Test result
-    print(f"New board: {result(board, (1,1))}")
-    print(f"Old board: {board_version}")
-    print(f"Current board: {board}")
+    # print(f"New board: {result(board, (2,1))}") # done
+    # print(f"Old board: {board_version}")
+    # print(f"Current board: {board}")
 
-    
     # Test winner
     print(f"Winner: {winner(board)}")
+
+    # Test terminal
+    print(f"Terminal: {terminal(board)}")
+
+    # Test utility
+    print(f"Utility: {utility(board)}")

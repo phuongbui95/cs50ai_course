@@ -9,15 +9,15 @@ X = "X"
 O = "O"
 EMPTY = None
 
-board_version = []
+old_boards = []
 
 def initial_state():
     """
     Returns starting state of the board.
     """
-    return [[O, O, X],
-            [X, X, O],
-            [O, X, X]]
+    return [[EMPTY, EMPTY, EMPTY],
+            [EMPTY, EMPTY, EMPTY],
+            [EMPTY, EMPTY, EMPTY]]
 
 
 def player(board):
@@ -58,18 +58,16 @@ def result(board, action):
     # remember to make a deep copy of board before going to the next change.
     """
 
-    # deep copy the board before adding new action
-    original_board = deepcopy(board)
-    board_version.append(original_board)
-
     # udpate new action
     if action not in actions(board):
-        raise ValueError(f"Invalid action: {action}")
-    else:
-        actions(board).remove(action)
-        board[action[0]][action[1]] = player(board)
+        raise ValueError(f"Invalid action: {action} is NOT EMPTY")
 
-    return board
+    # make a deep copy of the board first before making any changes.
+    # deep copy the board to create a new board before adding new action to it
+    new_board = deepcopy(board)
+    new_board[action[0]][action[1]] = player(board)
+
+    return new_board
 
 
 def winner(board):
@@ -106,39 +104,92 @@ def terminal(board):
     if winner(board) is not None:
         return True
         
-    # Check if board is full
-    return all(cell is not EMPTY for row in board for cell in row)
+    # Check whether board is full
+    '''
+    empty_count = 9
+    for row in board:
+        for cell in row:
+            if cell is not EMPTY:
+                empty_count -= 1
+    if empty_count = 0:
+        return True
+    '''
+    if all(cell is not EMPTY for row in board for cell in row):
+        return True
 
+    return False
 
 def utility(board):
     """
     Returns 1 if X has won the game, -1 if O has won, 0 otherwise.
     """
-    if terminal(board):
-        if winner(board) == X:
-            return 1
-        elif winner(board) == O:
-            return -1
-        else:
-            return 0
-    return None
 
+    if winner(board) == X:
+        return 1
+    elif winner(board) == O:
+        return -1
+    else:
+        return 0
+    
 
+# use recursive evaluation to check all steps ahead (not just 2 steps)
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
     # This is the machine's turn
     """
-    raise NotImplementedError
+    if terminal(board):
+        return None
+
+    current_player = player(board)
+    
+    def max_value(board):
+        if terminal(board):
+            return utility(board)
+        v = float("-inf")
+        for action in actions(board):
+            v = max(v, min_value(result(board, action)))
+        return v
+
+    def min_value(board):
+        if terminal(board):
+            return utility(board)
+        v = float("inf")
+        for action in actions(board):
+            v = min(v, max_value(result(board, action)))
+        return v
+
+    possible_actions = actions(board)
+    
+    if current_player == X:
+        # Maximizing player
+        best_value = float("-inf")
+        optimal_action = None
+        for action in possible_actions:
+            value = min_value(result(board, action))
+            if value > best_value:
+                best_value = value
+                optimal_action = action
+        return optimal_action
+    else:
+        # Minimizing player
+        best_value = float("inf")
+        optimal_action = None
+        for action in possible_actions:
+            value = max_value(result(board, action))
+            if value < best_value:
+                best_value = value
+                optimal_action = action
+        return optimal_action
 
 
 # test functions
-if __name__ == "__main__":
+if __name__ == "__main__":  
     # Test player
     board = initial_state()
-    # print(f"Current player: {player(board)}")
+    print(f"Current player: {player(board)}")
     
-    # # Test actions
+    # Test actions
     # print(f"Possible actions: {actions(board)}")
 
     # Test result
@@ -147,10 +198,20 @@ if __name__ == "__main__":
     # print(f"Current board: {board}")
 
     # Test winner
-    print(f"Winner: {winner(board)}")
+    # print(f"Winner: {winner(board)}")
 
     # Test terminal
-    print(f"Terminal: {terminal(board)}")
+    # print(f"Terminal: {terminal(board)}")
 
     # Test utility
-    print(f"Utility: {utility(board)}")
+    # print(f"Utility: {utility(board)}")
+
+    # Test minimax
+    # print(f"Minimax: {minimax(board)}")
+
+    action = minimax(board)
+    print(f"Optimal move: {action}")
+    new_board = result(board, action)
+    print("Resulting board:")
+    for row in new_board:
+        print(row)

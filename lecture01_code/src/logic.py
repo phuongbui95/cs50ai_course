@@ -16,7 +16,7 @@ class Sentence():
         return set()
 
     @classmethod
-    def validate(cls, sentence):
+    def validate(cls, sentence):    
         if not isinstance(sentence, Sentence):
             raise TypeError("must be a logical sentence")
 

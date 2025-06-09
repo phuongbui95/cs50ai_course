@@ -231,17 +231,19 @@ def model_check(knowledge, query):
     def check_all(knowledge, query, symbols, model):
         """Checks if knowledge base entails query, given a particular model."""
 
+        '''this is recursive process'''
         # If model has an assignment for each symbol
+        # Base case: all symbols assigned
         if not symbols:
-
             # If knowledge base is true in model, then query must also be true
             if knowledge.evaluate(model):
                 return query.evaluate(model)
-            return True
+            return True # It is always trivially true
+        
+        # Recursive case: try both True/False for next symbol
         else:
-
             # Choose one of the remaining unused symbols
-            remaining = symbols.copy()
+            remaining = symbols.copy() #
             p = remaining.pop()
 
             # Create a model where the symbol is true

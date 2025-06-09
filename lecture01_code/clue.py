@@ -27,7 +27,7 @@ def check_knowledge(knowledge):
         elif not model_check(knowledge, Not(symbol)):
             print(f"{symbol}: MAYBE")
 
-
+'''Knowlege Engineering'''
 # There must be a person, room, and weapon.
 knowledge = And(
     Or(mustard, plum, scarlet),

@@ -35,6 +35,7 @@ for i in range(4):
                     Symbol(f"{c1}{i}"), Not(Symbol(f"{c2}{i}"))
                 ))
 
+# Knowledge after 1st guess
 knowledge.add(Or(
     And(Symbol("red0"), Symbol("blue1"), Not(Symbol("green2")), Not(Symbol("yellow3"))),
     And(Symbol("red0"), Symbol("green2"), Not(Symbol("blue1")), Not(Symbol("yellow3"))),
@@ -44,6 +45,7 @@ knowledge.add(Or(
     And(Symbol("green2"), Symbol("yellow3"), Not(Symbol("red0")), Not(Symbol("blue1")))
 ))
 
+# Knowledge after 2nd guess
 knowledge.add(And(
     Not(Symbol("blue0")),
     Not(Symbol("red1")),

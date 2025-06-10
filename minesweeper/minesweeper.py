@@ -1,4 +1,4 @@
-import itertools
+import itertools # https://docs.python.org/3/library/itertools.html
 import random
 
 
@@ -101,12 +101,21 @@ class Sentence():
     def __str__(self):
         return f"{self.cells} = {self.count}"
 
+    # under what circumstances do you know for sure that a sentence’s cells are mines?
     def known_mines(self):
         """
         Returns the set of all cells in self.cells known to be mines.
         """
-        raise NotImplementedError
+        
+        flagged_mines = set()
+        for cell in self.cells:
+            if Minesweeper().is_mine(cell) == True:
+                flagged_mines.add(cell)
+        return flagged_mines
 
+        # raise NotImplementedError
+
+    # under what circumstances do you know for sure that a sentence’s cells are safe?
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
@@ -167,7 +176,7 @@ class MinesweeperAI():
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
-    def add_knowledge(self, cell, count):
+    def add_knowledge(self, cell, count): #use itertools
         """
         Called when the Minesweeper board tells us, for a given
         safe cell, how many neighboring cells have mines in them.
@@ -203,3 +212,18 @@ class MinesweeperAI():
             2) are not known to be mines
         """
         raise NotImplementedError
+
+# test
+if __name__ == "__main__":  
+    mineObject = Minesweeper()
+    # print out the board
+    mineObject.print()
+
+    postions_of_mine = mineObject.mines
+    print(f"Mines: {postions_of_mine}")
+    check_cell = next(iter(postions_of_mine))
+    print(f"Checking cell: {check_cell}")
+    # print(f"New set of Mines?: {postions_of_mine}")
+    print(f"Is_mine:{mineObject.is_mine(check_cell)}")
+    # print(f"Mines found: {mineObject.mines_found}")
+    print(f"Nearby mines: {mineObject.nearby_mines(check_cell)}")

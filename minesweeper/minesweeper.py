@@ -7,7 +7,7 @@ class Minesweeper():
     Minesweeper game representation
     """
 
-    def __init__(self, height=8, width=8, mines=8):
+    def __init__(self, height=8, width=8, mines=8): # if not inputting height, width, mines, automatically use 8,8,8
 
         # Set initial width, height, and number of mines
         self.height = height
@@ -15,6 +15,7 @@ class Minesweeper():
         self.mines = set()
 
         # Initialize an empty field with no mines
+        ## return boolean
         self.board = []
         for i in range(self.height):
             row = []
@@ -106,35 +107,40 @@ class Sentence():
         """
         Returns the set of all cells in self.cells known to be mines.
         """
-        
-        flagged_mines = set()
-        for cell in self.cells:
-            if Minesweeper().is_mine(cell) == True:
-                flagged_mines.add(cell)
-        return flagged_mines
-
-        # raise NotImplementedError
+        return self.cells if len(self.cells) == self.count else set()
 
     # under what circumstances do you know for sure that a sentence’s cells are safe?
     def known_safes(self):
         """
         Returns the set of all cells in self.cells known to be safe.
-        """
-        raise NotImplementedError
+        """ 
+        return self.cells if self.count == 0 else set()
 
     def mark_mine(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be a mine.
         """
-        raise NotImplementedError
+
+        # check if cell in the sentence
+        if cell in self.cells: 
+            # Update 
+            ## cell is no longer in the sentence
+            self.cells.remove(cell)
+            ## decrease the count in the sentence
+            self.count -= 1
 
     def mark_safe(self, cell):
         """
         Updates internal knowledge representation given the fact that
         a cell is known to be safe.
         """
-        raise NotImplementedError
+
+        # check if cell in the sentence
+        if cell in self.cells: 
+            # Update 
+            ## cell is no longer in the sentence
+            self.cells.remove(cell)
 
 
 class MinesweeperAI():
@@ -227,3 +233,6 @@ if __name__ == "__main__":
     print(f"Is_mine:{mineObject.is_mine(check_cell)}")
     # print(f"Mines found: {mineObject.mines_found}")
     print(f"Nearby mines: {mineObject.nearby_mines(check_cell)}")
+
+    sentence = Sentence({(2,1),(3,6)},3)
+    print(f"Sentence: {sentence}")

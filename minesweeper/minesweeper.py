@@ -1,7 +1,5 @@
 import itertools # https://docs.python.org/3/library/itertools.html
 import random
-from copy import deepcopy
-
 
 class Minesweeper():
     """
@@ -227,18 +225,26 @@ class MinesweeperAI():
         neighboring_cells = self.nearby_cells(cell)
         # Be sure to only include cells whose state is still undetermined in the sentence.
         undetermined_cells = set()
+        neighboring_mine_count = 0  # Track known mines in neighbors
+        
         for neighboring_cell in neighboring_cells:
-            if neighboring_cell not in self.mines and neighboring_cell not in self.safes:
+            if neighboring_cell in self.mines:
+                neighboring_mine_count += 1
+            elif neighboring_cell not in self.safes:
                 undetermined_cells.add(neighboring_cell)
 
-        self.knowledge.append(Sentence(undetermined_cells, count))
+        # add new sentence after checking all neighboring cells
+        self.knowledge.append(Sentence(undetermined_cells, count - neighboring_mine_count))
 
         # mark any additional cells as safe or as mines, 
         # if it can be concluded based on the AI's knowledge base
         for sentence in self.knowledge:
-            for mine in sentence.known_mines():
+            # create a copy of sets before iteration to avoid changing the set size
+            knonw_mines_copied = sentence.known_mines().copy()
+            knonw_safes_copied = sentence.known_safes().copy()
+            for mine in knonw_mines_copied:
                 self.mark_mine(mine)
-            for safe in sentence.known_safes():
+            for safe in knonw_safes_copied:
                 self.mark_safe(safe)
         
         # add any new sentences to the AI's knowledge base
@@ -251,9 +257,23 @@ class MinesweeperAI():
                     if sentence1.cells.issubset(sentence2.cells):
                         new_cells = sentence2.cells - sentence1.cells
                         new_count = sentence2.count - sentence1.count
+                        
+                        # infer safe cells when given new information
+                        if new_count == 0:
+                            for new_cell in new_cells:
+                                self.mark_safe(new_cell)          
+
+                        # infer mines when given new information
+                        ''' working '''
+                        elif len(new_cells) == new_count: 
+                            for new_cell in new_cells:
+                                self.mark_mine(new_cell)
+
+                        # add new sentence to AI's KB
                         new_sentence = Sentence(new_cells, new_count)
                         if new_sentence not in self.knowledge:
                             new_knowledge.append(new_sentence)
+
         # add new_knowledge to AI's knowledge base
         self.knowledge.extend(new_knowledge)
 
@@ -266,7 +286,11 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        raise NotImplementedError
+        # return 1 safe cell to make
+        for safe_cell in self.safes:
+            if safe_cell not in self.moves_made:
+                return safe_cell
+        return None
 
     def make_random_move(self):
         """
@@ -275,22 +299,22 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
-        raise NotImplementedError
+        # return 1 random cell to make
+        
+        # All possible moves
+        ''' Other script:
+            moves = set(itertools.product(range(self.height), range(self.width)))
+        '''
+        moves = set()
+        for i in range(self.height):
+            for j in range(self.width):
+                moves.add((i, j))
 
-# test
-if __name__ == "__main__":  
-    mineObject = Minesweeper()
-    # print out the board
-    mineObject.print()
+        # Remove all chosen moves and known to be mines
+        # set1 - set2 means: Return all elements in set1 that are NOT in set2.
+        moves_to_choose = moves - (self.mines | self.moves_made) # python sets: A - B - C == A - (B | C)
 
-    postions_of_mine = mineObject.mines
-    print(f"Mines: {postions_of_mine}")
-    check_cell = next(iter(postions_of_mine))
-    print(f"Checking cell: {check_cell}")
-    # print(f"New set of Mines?: {postions_of_mine}")
-    print(f"Is_mine:{mineObject.is_mine(check_cell)}")
-    # print(f"Mines found: {mineObject.mines_found}")
-    print(f"Nearby mines: {mineObject.nearby_mines(check_cell)}")
+        # Return random moves
+        return random.choice(list(moves_to_choose)) if moves_to_choose else None
 
-    sentence = Sentence({(2,1),(3,6)},3)
-    print(f"Sentence: {sentence}")
+

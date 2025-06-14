@@ -1,5 +1,6 @@
 import itertools # https://docs.python.org/3/library/itertools.html
 import random
+from copy import deepcopy
 
 
 class Minesweeper():
@@ -182,6 +183,7 @@ class MinesweeperAI():
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
+    # I create a function to identify the coordinates of neighboring cells
     def nearby_cells(self, cell):
         neighboring_cells = set()
         # Loop over all cells within one row and column
@@ -190,8 +192,10 @@ class MinesweeperAI():
                 # Ignore the cell itself
                 if (i, j) == cell:
                     continue
-                neighboring_cells.add(i,j)
-        
+                # Update count if cell in bounds
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    neighboring_cells.add((i, j))
+        # expected result
         return neighboring_cells
 
     def add_knowledge(self, cell, count):
@@ -214,39 +218,44 @@ class MinesweeperAI():
         """
         
         # mark the cell as a move that has been made
-        self.moves_made.add(self.cell)
+        self.moves_made.add(cell)
         
         # mark the cell as safe
-        mark_safe(self.cell)
+        self.mark_safe(cell)
         
         # add a new sentence to the AI's knowledge base based on the value of `cell` and `count`
-        neighboring_cells = nearby_cells(self.cell)
+        neighboring_cells = self.nearby_cells(cell)
         # Be sure to only include cells whose state is still undetermined in the sentence.
         undetermined_cells = set()
-        for cell in neighboring_cells:
-            if cell not in (self.mines or self.safe):
-                undetermined_cells.add(cell)
+        for neighboring_cell in neighboring_cells:
+            if neighboring_cell not in self.mines and neighboring_cell not in self.safes:
+                undetermined_cells.add(neighboring_cell)
 
-        new_sentence = Sentence(undetermined_cells, self.count)
-        self.knowledge.append(new_sentence)
+        self.knowledge.append(Sentence(undetermined_cells, count))
 
         # mark any additional cells as safe or as mines, 
         # if it can be concluded based on the AI's knowledge base
-        if len(new_sentence.known_mines) > 0:
-            mined_cells = new_sentence.cells
-            self.mines.add(new_sentence.cells)
-            for sentence in self.knowledge:
-                cells_to_track = sentence.cells
-                cells_to_track.remove(mined_cells) 
-        elif len(new_sentence.known_safes) > 0:
-            safe_cells = new_sentence.cells
-            self.safes.add(new_sentence.cells)
+        for sentence in self.knowledge:
+            for mine in sentence.known_mines():
+                self.mark_mine(mine)
+            for safe in sentence.known_safes():
+                self.mark_safe(safe)
         
         # add any new sentences to the AI's knowledge base
         # if they can be inferred from existing knowledge
-        
-
-        # raise NotImplementedError
+        # a temporary list for new sentences to avoid modifying the AI's KB while iterating
+        new_knowledge = []
+        for sentence1 in self.knowledge:
+            for sentence2 in self.knowledge:
+                if sentence1 != sentence2 and sentence1.cells and sentence2.cells:
+                    if sentence1.cells.issubset(sentence2.cells):
+                        new_cells = sentence2.cells - sentence1.cells
+                        new_count = sentence2.count - sentence1.count
+                        new_sentence = Sentence(new_cells, new_count)
+                        if new_sentence not in self.knowledge:
+                            new_knowledge.append(new_sentence)
+        # add new_knowledge to AI's knowledge base
+        self.knowledge.extend(new_knowledge)
 
     def make_safe_move(self):
         """

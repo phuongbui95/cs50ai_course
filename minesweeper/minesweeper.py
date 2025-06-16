@@ -197,7 +197,7 @@ class MinesweeperAI():
         return neighboring_cells
     
     # Added function
-    def new_cells_mines(self, cell, count): # either multiple P or multiple Not P
+    def cell_info(self, cell, count): # either P or Not P
         neighboring_cells = self.nearby_cells(cell)
         undetermined_cells = set()
         new_count = count
@@ -209,35 +209,58 @@ class MinesweeperAI():
                 continue
             else: # not yet known to be either safe or mines 
                 undetermined_cells.add(neighboring_cell)
-        return (undetermined_cells, new_count)
+        
+        # Add new sentence to knowledge base
+        if undetermined_cells: # not empty
+            self.knowledge.append(Sentence(undetermined_cells, new_count))
     
+    ''' Let play the game and figure out inferences your own first '''
     # Added function
-    def inference_from_knowledge(self):
-        # a temporary list for new sentences to avoid modifying the AI's KB while iterating
-        new_knowledge = []
-        for sentence1 in self.knowledge:
-            for sentence2 in self.knowledge:
-                if sentence1 != sentence2 and sentence1.cells and sentence2.cells:
-                    if sentence1.cells.issubset(sentence2.cells):
-                        new_cells = sentence2.cells - sentence1.cells
-                        new_count = sentence2.count - sentence1.count
+    # Each new inference might enable additional inferences => apply a recursion
+    def make_inferences(self):
+        while True:
+            new_information = False
+            
+            # Check each sentence for known mines/safes
+            for sentence in self.knowledge:
+                # when you mark the cells, remove function will activate
+                # create copies to avoid runtime error when iterating the KB
+                known_mines = sentence.known_mines().copy() 
+                known_safes = sentence.known_safes().copy()
+                
+                # Mark new mines
+                for mine in known_mines:
+                    if mine not in self.mines:
+                        self.mark_mine(mine)
+                        new_information = True # keep the recursion
                         
-                        # infer safe cells when given new information: Done
-                        if new_count == 0:
-                            for new_cell in new_cells:
-                                self.mark_safe(new_cell)          
-
-                        # infer mine when given new information: Not Yet
-                        # if len(new_cells) == new_count:
-                        #     for cell in new_cells:
-                        #         self.mark_mine(cell)
-
-                        # Add new sentence to AI's KB from inference
-                        if new_cells: # not empty set
+                # Mark new safes
+                for safe in known_safes:
+                    if safe not in self.safes:
+                        self.mark_safe(safe)
+                        new_information = True # keep the recursion
+            
+            # Step 5: Add new sentences from subset inference
+            new_knowledge = []
+            for sentence1 in self.knowledge:
+                for sentence2 in self.knowledge:
+                    if sentence1 != sentence2 and sentence1.cells and sentence2.cells:
+                        if sentence1.cells.issubset(sentence2.cells):
+                            new_cells = sentence2.cells - sentence1.cells
+                            new_count = sentence2.count - sentence1.count
                             new_sentence = Sentence(new_cells, new_count)
-                            if new_sentence not in self.knowledge:
+                            
+                            if new_sentence not in self.knowledge and new_cells:
                                 new_knowledge.append(new_sentence)
-        return new_knowledge
+                                new_information = True
+                                
+            # Add new sentences to knowledge base
+            self.knowledge.extend(new_knowledge)
+            
+            # Stop if no new inferences or information were made
+            if not new_information:
+                break
+    
 
     def add_knowledge(self, cell, count):
         """
@@ -265,24 +288,11 @@ class MinesweeperAI():
         self.mark_safe(cell)
         
         # Step 03: add a new sentence to the AI's KB based on the value of `cell` and `count`
-        new_cells_mines = self.new_cells_mines(cell, count)
-        new_sentence = Sentence(new_cells_mines[0], new_cells_mines[1])
-        self.knowledge.append(new_sentence)
+        self.cell_info(cell, count)
 
         # Step 04: mark any additional cells as safe or as mines, if concluded based on the AI's KB
-        for sentence in self.knowledge:
-            # Create copies to avoid runtime errors when iterating the KB
-            known_mines = sentence.known_mines().copy()
-            known_safes = sentence.known_safes().copy()      
-            # Mark all known mines
-            for mine in known_mines:
-                self.mark_mine(mine)
-            # Mark all known safe cells
-            for safe in known_safes:
-                self.mark_safe(safe)
-        
         # Step 05: add any new sentences to the AI's KB if they can be inferred from existing knowledge
-        self.knowledge.extend(inference_from_knowledge())
+        self.make_inferences()
         
 
     def make_safe_move(self):

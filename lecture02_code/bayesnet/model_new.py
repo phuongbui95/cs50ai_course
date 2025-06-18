@@ -1,17 +1,17 @@
+''' Re-written from: https://stackoverflow.com/questions/78167360/how-do-i-use-pomegranate-functions '''
+
 from pomegranate.distributions import Categorical, ConditionalCategorical
-from pomegranate.bayesian_network import *
+from pomegranate.bayesian_network import BayesianNetwork
 
-import numpy as np
-from torch import nn
+import torch
 from torch.masked import MaskedTensor
-
 from collections import Counter
 
 # ------------------------------------Create Nodes------------------------------------
 
 # Rain node has no parents
 probs_rain = torch.tensor([[0.7,    # none
-                            0.2,    # ight
+                            0.2,    # light
                             0.1]    # heavy
 ])
 rain = Categorical(probs=probs_rain)
@@ -34,15 +34,15 @@ train = ConditionalCategorical(probs=[probs_train])
 
 # Appointment node is conditional on train
 probs_appointment = torch.tensor([
-    [0.9, 0.1],  # "on time" (train): attend and miss
-    [0.6, 0.4]   # "delayed" (train): attend and miss
+    [0.9, 0.1],  # "on time" (train): attend, miss
+    [0.6, 0.4]   # "delayed" (train): attend, miss
 ])
 appointment = ConditionalCategorical(probs=[probs_appointment])
 
 # ------------------------------------Create a Bayesian Network and add states------------------------------------
 
 model = BayesianNetwork()
-model.add_distributions([rain,maintenance,train,appointment])
+model.add_distributions([rain, maintenance, train, appointment])
 
 # Add edges connecting nodes
 model.add_edge(rain, maintenance)
@@ -50,39 +50,39 @@ model.add_edge(rain, train)
 model.add_edge(maintenance, train)
 model.add_edge(train, appointment)
 
-# Calculate probability for a given observation ["none", "no", "on time", "attend"]
-observation = [0, 1, 0, 0]
-probability = model.probability([observation])
-print(probability)
+# ------------------------------------Inference Examples------------------------------------
 
-# Calculate predictions based on the evidence that the train was delayed
-observation = torch.tensor([[0, 0, 1, 0]])
-mask = torch.tensor([[False, False, True, False]])
-X = MaskedTensor(observation, mask)
+def print_probability_for_observation():
+    # Probability for a given observation ["none", "no", "on time", "attend"]
+    observation = [0, 1, 0, 0]
+    probability = model.probability([observation])
+    print("Probability of observation [none, no, on time, attend]:", probability)
 
-probabilities = model.predict_proba(X)
-print(probabilities)
-
+def print_predict_proba_for_delayed_train():
+    # Predict probabilities given evidence that train was delayed
+    observation = torch.tensor([[0, 0, 1, 0]])
+    mask = torch.tensor([[False, False, True, False]])
+    X = MaskedTensor(observation, mask)
+    probabilities = model.predict_proba(X)
+    print("Predicted probabilities with train delayed evidence:", probabilities)
 
 # ------------------------------------Rejection Sampling------------------------------------
 
-# Compute distribution of Appointment given that train is delayed
-N = 10000
-data = []
+def rejection_sampling_appointment_given_train_delayed(N=10000):
+    # Vectorized sampling for efficiency
+    samples = model.sample(N)
+    # Filter samples where train is delayed (train index 2 == 1)
+    delayed_mask = samples[:, 2] == 1
+    delayed_appointments = samples[delayed_mask, 3]
+    count = Counter(delayed_appointments.tolist())
+    total = sum(count.values())
+    prob_attend = count.get(0, 0) / total if total > 0 else 0
+    print("Appointment counts given train delayed:", count)
+    print(f"Probability that you attend given train is delayed: {prob_attend:.4f}")
 
-# Repeat sampling 10,000 times
-for i in range(N):
-    # Generate a sample based on the function that we defined earlier
-    sample = model.sample(1)
+# ------------------------------------Main Execution------------------------------------
 
-    # If, in this sample, the variable of Train has the value delayed, save the sample.
-    # Since we are interested in the probability distribution of Appointment given that the train is delayed,
-    # we discard the samples where the train was on time.
-    if sample[:, 2] == 1:  # Assuming train delayed is encoded as 1
-        data.append(sample[:, 3].item())  # Appointment
-
-# Count how many times each value of the variable appeared
-count = Counter(data)
-prob_attend = count[0] / sum(count.values())
-print(count)
-print(f"probability that you attend given train is on time: {prob_attend:.4f}")
+if __name__ == "__main__":
+    print_probability_for_observation()
+    print_predict_proba_for_delayed_train()
+    rejection_sampling_appointment_given_train_delayed()

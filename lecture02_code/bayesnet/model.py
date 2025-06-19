@@ -6,6 +6,7 @@ https://stackoverflow.com/questions/78167360/how-do-i-use-pomegranate-functions
 '''
 
 from pomegranate import *
+from pomegranate.base import Node
 
 # Rain node has no parents
 rain = Node(DiscreteDistribution({

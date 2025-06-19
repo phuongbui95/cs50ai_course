@@ -2,18 +2,20 @@
 
 from pomegranate.distributions import Categorical, ConditionalCategorical
 from pomegranate.bayesian_network import BayesianNetwork
-
 import torch
-from collections import Counter
+from model_visualization import print_network_structure
 
 # ------------------------------------Create Nodes------------------------------------
 
 # Rain node has no parents
-probs_rain = torch.tensor([[0.7,    # none
-                            0.2,    # light
-                            0.1]    # heavy
+probs_rain = torch.tensor([
+    [   
+        0.7,    # none
+        0.2,    # light
+        0.1     # heavy
+    ]    
 ])
-rain = Categorical(probs=probs_rain)
+rain = Categorical(probs=probs_rain) # Categorial distribution is a Discrete Distribution
 
 # Track maintenance node is conditional on rain
 probs_maintenance = torch.tensor([
@@ -25,9 +27,9 @@ maintenance = ConditionalCategorical(probs=[probs_maintenance])
 
 # Train node is conditional on rain and maintenance
 probs_train = torch.tensor([
-    [[0.8, 0.2], [0.9, 0.1]],  # "none" (rain): ["yes", "no"] (maintenance): on time, delayed
-    [[0.6, 0.4], [0.7, 0.3]],  # "light" (rain): ["yes", "no"] maintenance: on time, delayed
-    [[0.4, 0.6], [0.5, 0.5]]   # "heavy" (rain): ["yes", "no"] maintenance: on time, delayed
+    [[0.8, 0.2], [0.9, 0.1]],  # "none" (rain): (maintenance) ["yes", "no"] train : on time, delayed
+    [[0.6, 0.4], [0.7, 0.3]],  # "light" (rain): (maintenance) ["yes", "no"] train : on time, delayed
+    [[0.4, 0.6], [0.5, 0.5]]   # "heavy" (rain): (maintenance) ["yes", "no"] traint\: on time, delayed
 ])
 train = ConditionalCategorical(probs=[probs_train])
 
@@ -48,3 +50,8 @@ model.add_edge(rain, maintenance)
 model.add_edge(rain, train)
 model.add_edge(maintenance, train)
 model.add_edge(train, appointment)
+
+# Print out Execution
+if __name__ == "__main__":
+    print(model)
+    print_network_structure(model)

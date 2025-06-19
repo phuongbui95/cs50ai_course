@@ -1,5 +1,9 @@
-''' This version is outdated. Update the whole script 
-here: https://stackoverflow.com/questions/78167360/how-do-i-use-pomegranate-functions'''
+''' 
+This version is outdated. 
+Update the whole script here: 
+https://stackoverflow.com/questions/78167360/how-do-i-use-pomegranate-functions
+
+'''
 
 from pomegranate import *
 

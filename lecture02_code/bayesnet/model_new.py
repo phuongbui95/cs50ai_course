@@ -53,5 +53,5 @@ model.add_edge(train, appointment)
 
 # Print out Execution
 if __name__ == "__main__":
-    print(model)
+    # print(model)
     print_network_structure(model)

@@ -15,18 +15,21 @@ samples = model.sample(N)
 
 # Filter samples where train is delayed
 # samples[:,2] = select the third variable ("train") from all samples
-node_name = {"rain":0, "maintenance":1, "train":2, "appointment":3}
-delayed_train_mask = samples[:, node_name["train"]] == train["delayed"]
-appointments_outcome = samples[delayed_train_mask, node_name["appointment"]]
+# nodes = {"rain":0, "maintenance":1, "train":2, "appointment":3}
+delayed_train_mask = samples[:, 2] == train["delayed"]
+appointments_outcome = samples[delayed_train_mask, 3]
 
 # Count Appointment Outcomes
 counts = Counter(appointments_outcome.tolist())
 total = sum(counts.values())
-prob_attend = counts.get(appointment["attend"], 0) / total if total > 0 else 0 # prob_attend = count.get(0, 0) / total if total > 0 else 0
+# prob_attend = counts.get(0, 0) / total if total > 0 else 0
+# counts.get(appointment["attend"], 0) => get value of appointment["attend"] key, if this key does not exit, return 0
+prob_attend = counts.get(appointment["attend"], 0) / total if total > 0 else 0 
 
 # Print results with labels
 label_map = {0: "attend", 1: "miss"}
 formatted_counts = {label_map.get(k, str(k)): v for k, v in counts.items()}
+
 
 print("Appointment counts given train delayed:", formatted_counts)
 print(f"Probability that you attend given train is delayed: {prob_attend:.4f}")

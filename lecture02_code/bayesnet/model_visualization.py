@@ -58,7 +58,7 @@ def print_network_structure(model):
             print("  Probabilities:", dict(zip(outcome_label, formatted_probs)))
         elif isinstance(dist, ConditionalCategorical):
             print("  Type: Conditional")
-            print("  Conditional Probability Table:\n" + "-" * 40)
+            print("-" * 40)
             print_conditional_probs(dist, i)
         print("-" * 40 + "\n")
 

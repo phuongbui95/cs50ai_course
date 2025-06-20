@@ -65,8 +65,6 @@ def print_network_structure(model):
 
 
 
-
-
 '''
 #---------------Version 01--------------#
 

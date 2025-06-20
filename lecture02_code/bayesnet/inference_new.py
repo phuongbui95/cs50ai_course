@@ -11,8 +11,8 @@ appointment = {"attend": 0, "miss": 1}
 # Predict probabilities given evidence that train was delayed
 # Evidence: train is delayed (index 2 is 1), others are unknown
 # predictions = torch.tensor([[0,0,1,0]])
-evidence = torch.tensor([[0, 0, train["delayed"], 0]])  # Values are placeholders except for train
-mask = torch.tensor([[False, False, True, False]])      # Only train is observed
+evidence = torch.tensor([[rain["heavy"], 0, train["delayed"], 0]])  # Values are placeholders except for train
+mask = torch.tensor([[True, False, True, False]])      # Only train is observed
 
 X = MaskedTensor(evidence, mask)
 probabilities = model.predict_proba(X)

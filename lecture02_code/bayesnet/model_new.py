@@ -43,7 +43,7 @@ appointment = ConditionalCategorical(probs=[probs_appointment])
 # ------------------------------------Create a Bayesian Network and add states------------------------------------
 
 model = BayesianNetwork()
-model.add_distributions([rain, maintenance, train, appointment])
+model.add_distributions([rain, maintenance, train, appointment]) # add states
 
 # Add edges connecting nodes
 model.add_edge(rain, maintenance)

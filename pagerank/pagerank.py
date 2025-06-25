@@ -11,11 +11,11 @@ def main():
     if len(sys.argv) != 2:
         sys.exit("Usage: python pagerank.py corpus")
     corpus = crawl(sys.argv[1])
-    ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
+    ranks = sample_pagerank(corpus, DAMPING, SAMPLES) # Random Surfer Model
     print(f"PageRank Results from Sampling (n = {SAMPLES})")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
-    ranks = iterate_pagerank(corpus, DAMPING)
+    ranks = iterate_pagerank(corpus, DAMPING) # Iterative Algorithm
     print(f"PageRank Results from Iteration")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
@@ -41,7 +41,7 @@ def crawl(directory):
     # Only include links to other pages in the corpus
     for filename in pages:
         pages[filename] = set(
-            link for link in pages[filename]
+            link for link in pages[filename] 
             if link in pages
         )
 
@@ -57,7 +57,22 @@ def transition_model(corpus, page, damping_factor):
     linked to by `page`. With probability `1 - damping_factor`, choose
     a link at random chosen from all pages in the corpus.
     """
-    raise NotImplementedError
+
+    output = dict()
+    pages_num = len(corpus)    
+    page_links = corpus[page]
+    
+    if page_links: # not empty
+        for website in corpus:
+            output[website] = (1 - damping_factor) / pages_num
+            if website in page_links:
+                output[website] += damping_factor / len(page_links) 
+    else:
+        # no outgoing links given the current page, eturn a probability distribution that chooses randomly among all pages with equal probability
+        for website in corpus:
+            output[website] = 1 / pages_num
+
+    return output
 
 
 def sample_pagerank(corpus, damping_factor, n):
@@ -86,3 +101,16 @@ def iterate_pagerank(corpus, damping_factor):
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+    # # transition_model(corpus, page, damping_factor)
+    # if len(sys.argv) != 2:
+    #     sys.exit("Usage: python pagerank.py corpus")
+    # corpus = crawl(sys.argv[1])
+    
+    # print(transition_model(corpus,random.choice(list(corpus.keys())),DAMPING))

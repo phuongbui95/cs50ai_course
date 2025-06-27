@@ -11,10 +11,12 @@ def main():
     if len(sys.argv) != 2:
         sys.exit("Usage: python pagerank.py corpus")
     corpus = crawl(sys.argv[1])
+    
     ranks = sample_pagerank(corpus, DAMPING, SAMPLES) # Random Surfer Model
     print(f"PageRank Results from Sampling (n = {SAMPLES})")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
+    
     ranks = iterate_pagerank(corpus, DAMPING) # Iterative Algorithm
     print(f"PageRank Results from Iteration")
     for page in sorted(ranks):
@@ -84,7 +86,34 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    
+    # Initialize a counter
+    counter = {page: 0 for page in corpus}
+    
+    # Choose a starting page
+    current_page = random.choice(list(corpus.keys()))
+
+    # Simulate the random surfer
+    n_steps = n
+    while n_steps > 0:
+        probabilities = transition_model(corpus, current_page, damping_factor)
+        population = list(probabilities.keys())
+        weights = list(probabilities.values())
+        next_page = random.choices(
+                                    population= population,
+                                    weights= weights,
+                                    k=1
+                                ) # return a list with 1 element
+        counter[next_page[0]] += 1
+        current_page = next_page[0]
+        n_steps -= 1
+
+    # Normalize the counts
+    for page in counter:
+        counter[page] /= n
+    
+    # Return the result
+    return counter
 
 
 def iterate_pagerank(corpus, damping_factor):
@@ -96,21 +125,44 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    
+    N = len(corpus)
+    d = damping_factor
+    threshold = 0.001
 
+    # starting state: each page's rank is equally assigned 1/N
+    page_rank = {page: 1/N for page in corpus}
+
+    #----- PageRank Update ----#
+    while True:       
+        new_rank = {} 
+        for p in corpus:
+            sum_page_i = 0
+            for i in corpus:
+                # If page i links to p, add its share
+                if p in corpus[i]:
+                    sum_page_i += page_rank[i] / len(corpus[i])
+                # If page i has no outgoing links, treat it as linking to all pages
+                if len(corpus[i]) == 0:
+                    sum_page_i += page_rank[i] / N
+
+            new_rank[p] = (1-d) / N + d * sum_page_i 
+            
+        #----- Convergence Check ----#
+        '''
+        differences = [abs(new_rank[p] - page_rank[p]) for p in corpus] 
+        if max(differences) < threshold:
+            break
+        '''
+        
+        if all(abs(new_rank[p] - page_rank[p]) < threshold for p in corpus):
+             break # Stop the loop
+        
+        #----- Update Values ----#
+        page_rank = new_rank
+
+    # Return
+    return page_rank
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-    # # transition_model(corpus, page, damping_factor)
-    # if len(sys.argv) != 2:
-    #     sys.exit("Usage: python pagerank.py corpus")
-    # corpus = crawl(sys.argv[1])
-    
-    # print(transition_model(corpus,random.choice(list(corpus.keys())),DAMPING))

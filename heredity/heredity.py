@@ -65,6 +65,7 @@ def main():
     for have_trait in powerset(names):
 
         # Check if current set of people violates known information
+        # Trait is None 
         fails_evidence = any(
             (people[person]["trait"] is not None and
              people[person]["trait"] != (person in have_trait))
@@ -139,7 +140,66 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    raise NotImplementedError
+    
+    # Hints
+    '''
+    Note 1:
+        parents not listed: use unconditional probabilities.
+        parents listed: compute based on parents' gene counts and mutation (conditional probabilities).
+    Note 02:
+        Trait is True => scenario enumeration: Only True cases => joint probability: must have Trait
+        Trait is False => scenario enumeration: Only False cases => joint probability: must not have Trait
+        Trait is None => exclude in fails_evidence loop of main()
+    '''
+    
+    joint_prob = 1 # starting value to be multiplied later
+    parents_listed = {person for person in people if people[person]["mother"] and people[person]["father"]}
+
+    for person in people:
+        shown_trait = person in have_trait # boolean object => None value is passed in fails_evidence
+        copies_of_gene = 1 if person in one_gene else 2 if person in two_genes else 0
+
+        # uncondional probabilities
+        if person not in parents_listed: 
+            prob = PROBS["gene"][copies_of_gene] * PROBS["trait"][copies_of_gene][shown_trait]
+            joint_prob *= prob
+
+        # conditional on parents' gene and mutation = they are the children
+        else:
+            # Each parent pass 1 copy of gene if there is no mutation: probability per parent is 0.5
+
+            def pass_gene(parent):
+                if parent in two_genes:
+                    return 1 - PROBS["mutation"]
+                elif parent in one_gene:
+                    return 0.5
+                else:
+                    return PROBS["mutation"]
+
+            pass_mother = pass_gene(people[person]["mother"])
+            pass_father = pass_gene(people[person]["father"])
+
+            # Probability child gets copies_of_gene: every child get 1 copy from both mother and father
+            '''
+            0 copies of gene: both parents passed no mutated gene
+            1 copies of gene: either mother XOR father passed a mutated gene
+            2 copies of gene: both parent passed mutated gene
+            '''
+
+            prob_child = 1 # starting state
+            if copies_of_gene == 0:
+                prob_child =  (1 - pass_mother) * (1 - pass_father)
+            elif copies_of_gene == 1:
+                prob_child = pass_mother * (1 - pass_father) + (1 - pass_mother) * pass_father
+            else:
+                prob_child = pass_mother * pass_father
+            
+
+            joint_prob *= (prob_child * PROBS["trait"][copies_of_gene][shown_trait])
+
+    # multiply all elements of the list
+    return joint_prob
+
 
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
@@ -160,5 +220,17 @@ def normalize(probabilities):
     raise NotImplementedError
 
 
+def test(): # remove this function later
+    # Check for proper usage
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python heredity.py data.csv")
+    people = load_data(sys.argv[1])
+
+    #
+    for person in people:
+        print(f"{person}: {people[person]}")
+         
+
 if __name__ == "__main__":
-    main()
+    # main()
+    test()

@@ -185,7 +185,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
             2 copies of gene: both parent passed mutated gene (each parent passed 1 copy of gene to the child)
             '''
 
-            prob_child = 1
+            prob_child = 1 # starting value to be multiplied later
             if copies_of_gene == 0:
                 prob_child = (1 - pass_mother) * (1 - pass_father)
             elif copies_of_gene == 1:

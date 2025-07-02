@@ -216,8 +216,27 @@ def normalize(probabilities):
     """
     Update `probabilities` such that each probability distribution
     is normalized (i.e., sums to 1, with relative proportions the same).
-    """
-    raise NotImplementedError
+    """ 
 
+    for person in probabilities:
+        for field in ["gene", "trait"]:
+            unnormalized_sum = sum(probabilities[person][field].values())
+            if unnormalized_sum == 0: # avoid Zero Division Error
+                continue
+            for key in probabilities[person][field]:
+                probabilities[person][field][key] /= unnormalized_sum
+
+    '''
+    def cal(arg):
+        unnormalized_sum = sum(arg[i] for i in arg)
+        for i in arg:
+            arg[i] /= unnormalized_sum
+
+    for person in probabilities:
+        cal(probabilities[person]["gene"])
+        cal(probabilities[person]["trait"])
+    '''    
+
+        
 if __name__ == "__main__":
     main()

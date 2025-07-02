@@ -166,35 +166,33 @@ def joint_probability(people, one_gene, two_genes, have_trait):
 
         # conditional on parents' gene and mutation = they are the children
         else:
-            # Each parent pass 1 copy of gene if there is no mutation: probability per parent is 0.5
+            # Probability that a parent passes mutated 1 copy of mutated gene to the child
+            def pass_mutated_gene_to_child(parent):
+                if parent in two_genes: # almost always pass 1 copy of mutated gene,if there is no mutation
+                    return 1 - PROBS["mutation"] # no mutation probability
+                elif parent in one_gene: # only 1 in 2 copies of gene (50% randomness) is mutated and will be passed to the child
+                    return 0.5 # prob of mutation only applies in 0 or 2 copies of mutated gene => read UNDERSTANDING
+                else: # 0 copy of gene is mutated => always pass healthy gene unless mutation occurs
+                    return PROBS["mutation"] # probability of mutation
 
-            def pass_gene(parent):
-                if parent in two_genes:
-                    return 1 - PROBS["mutation"]
-                elif parent in one_gene:
-                    return 0.5
-                else:
-                    return PROBS["mutation"]
-
-            pass_mother = pass_gene(people[person]["mother"])
-            pass_father = pass_gene(people[person]["father"])
+            pass_mother = pass_mutated_gene_to_child(people[person]["mother"])
+            pass_father = pass_mutated_gene_to_child(people[person]["father"])
 
             # Probability child gets copies_of_gene: every child get 1 copy from both mother and father
             '''
             0 copies of gene: both parents passed no mutated gene
             1 copies of gene: either mother XOR father passed a mutated gene
-            2 copies of gene: both parent passed mutated gene
+            2 copies of gene: both parent passed mutated gene (each parent passed 1 copy of gene to the child)
             '''
 
-            prob_child = 1 # starting state
+            prob_child = 1
             if copies_of_gene == 0:
-                prob_child =  (1 - pass_mother) * (1 - pass_father)
+                prob_child = (1 - pass_mother) * (1 - pass_father)
             elif copies_of_gene == 1:
                 prob_child = pass_mother * (1 - pass_father) + (1 - pass_mother) * pass_father
             else:
                 prob_child = pass_mother * pass_father
             
-
             joint_prob *= (prob_child * PROBS["trait"][copies_of_gene][shown_trait])
 
     # multiply all elements of the list
@@ -209,8 +207,10 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    raise NotImplementedError
-
+    for person in probabilities:
+        copies_of_gene = 1 if person in one_gene else 2 if person in two_genes else 0
+        probabilities[person]["gene"][copies_of_gene] += p
+        probabilities[person]["trait"][person in have_trait] += p
 
 def normalize(probabilities):
     """
@@ -219,18 +219,5 @@ def normalize(probabilities):
     """
     raise NotImplementedError
 
-
-def test(): # remove this function later
-    # Check for proper usage
-    if len(sys.argv) != 2:
-        sys.exit("Usage: python heredity.py data.csv")
-    people = load_data(sys.argv[1])
-
-    #
-    for person in people:
-        print(f"{person}: {people[person]}")
-         
-
 if __name__ == "__main__":
-    # main()
-    test()
+    main()

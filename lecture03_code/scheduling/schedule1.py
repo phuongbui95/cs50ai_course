@@ -1,3 +1,4 @@
+# pip install python-constraint
 from constraint import *
 
 problem = Problem()

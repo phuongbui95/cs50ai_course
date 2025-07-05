@@ -15,3 +15,4 @@ if result.success:
     print(f"X2: {round(result.x[1], 2)} hours")
 else:
     print("No solution")
+

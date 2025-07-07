@@ -99,7 +99,12 @@ class CrosswordCreator():
         (Remove any values that are inconsistent with a variable's unary
          constraints; in this case, the length of the word.)
         """
-        raise NotImplementedError
+        for v in self.domains:
+            value_to_remove = set() # collect words to remove later
+            for word in self.domains[v]:
+                if len(word) != v.length:
+                    value_to_remove.add(word) # don't remove directly to avoid modify the set's size while iterating over it
+            self.domains[v] -= value_to_remove
 
     def revise(self, x, y):
         """
@@ -192,6 +197,24 @@ def main():
         if output:
             creator.save(assignment, output)
 
+def test():
+
+    # Check usage
+    if len(sys.argv) not in [3, 4]:
+        sys.exit("Usage: python generate.py structure words [output]")
+
+    # Parse command-line arguments
+    structure = sys.argv[1]
+    words = sys.argv[2]
+    output = sys.argv[3] if len(sys.argv) == 4 else None
+
+    # Generate crossword
+    crossword = Crossword(structure, words)
+    creator = CrosswordCreator(crossword)
+    
+    creator.enforce_node_consistency()
+    print(creator.domains)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test()

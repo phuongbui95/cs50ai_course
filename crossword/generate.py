@@ -101,9 +101,12 @@ class CrosswordCreator():
         """
         for v in self.domains:
             value_to_remove = set() # collect words to remove later
+            
             for word in self.domains[v]:
                 if len(word) != v.length:
                     value_to_remove.add(word) # don't remove directly to avoid modify the set's size while iterating over it
+            
+            # remove set of inconsistent words of variable v
             self.domains[v] -= value_to_remove
 
     def revise(self, x, y):
@@ -115,7 +118,10 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        raise NotImplementedError
+        var_x = self.domains[x]
+        var_y = self.domains[y]
+        
+        # Case 01: Lenght
 
     def ac3(self, arcs=None):
         """
@@ -212,6 +218,7 @@ def test():
     crossword = Crossword(structure, words)
     creator = CrosswordCreator(crossword)
     
+    # Test functions
     creator.enforce_node_consistency()
     print(creator.domains)
 

@@ -118,11 +118,36 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        var_x = self.domains[x]
-        var_y = self.domains[y]
-        
-        # Case 01: Lenght
 
+        overlap = self.crossword.overlaps[x, y]
+        if not overlap:
+            return False
+        
+        i, j = overlap
+        # if overlap, (i, j), where x's ith character overlaps y's jth character
+        conflict = set()
+        for w1 in self.domains[x]:
+            # If there is NO word in y's domain that matches w1 at the overlap, mark w1 for removal
+            if not any(w1[i] == w2[j] for w2 in self.domains[y]):
+                conflict.add(w1)
+            
+            '''
+            for w2 in self.domains[y]:
+                if w1[i] == w2[j]:
+                    break # exit the inner loop y, go to next iteration of outer loop x
+            # No break occurred: no match found
+            else: 
+                conflict.add(w1)
+            '''
+
+        # update the values of variable x
+        if conflict:
+            self.domains[x] -= conflict
+            return True
+        return False
+        
+        
+        
     def ac3(self, arcs=None):
         """
         Update `self.domains` such that each variable is arc consistent.
@@ -220,7 +245,28 @@ def test():
     
     # Test functions
     creator.enforce_node_consistency()
-    print(creator.domains)
+    
+    # for var in creator.domains:
+    #     print(f"{var} => {creator.domains[var]}")
+    #     print(f"{var} => {crossword.neighbors(var)}")
+    
+    # for cell in crossword.overlaps:
+    #     if crossword.overlaps[cell]:
+    #         print(f"{cell} => {crossword.overlaps[cell]}")
+
+    x = Variable(1, 7, 'down', 7)
+    y = Variable(4, 4, 'across', 5)
+    print(f"x = {creator.domains[x]}")
+    print(f"y = {creator.domains[y]}")
+    print(f"overlap = {crossword.overlaps[x, y]}")
+    
+    print(creator.revise(x,y))
+    print(f"revised x = {creator.domains[x]}")
+    
+
+    
+
+
 
 if __name__ == "__main__":
     # main()

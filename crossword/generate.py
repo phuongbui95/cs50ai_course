@@ -93,7 +93,7 @@ class CrosswordCreator():
         self.ac3()
         return self.backtrack(dict())
 
-    def enforce_node_consistency(self):
+    def enforce_node_consistency(self): # unary constraints
         """
         Update `self.domains` such that each variable is node-consistent.
         (Remove any values that are inconsistent with a variable's unary
@@ -109,7 +109,7 @@ class CrosswordCreator():
             # remove set of inconsistent words of variable v
             self.domains[v] -= value_to_remove
 
-    def revise(self, x, y):
+    def revise(self, x, y): # binary constraints
         """
         Make variable `x` arc consistent with variable `y`.
         To do so, remove values from `self.domains[x]` for which there is no
@@ -147,8 +147,7 @@ class CrosswordCreator():
         return False
         
         
-        
-    def ac3(self, arcs=None):
+    def ac3(self, arcs=None): # adds all the arcs in the csp to a queue then iterates to revise the pairs of value
         """
         Update `self.domains` such that each variable is arc consistent.
         If `arcs` is None, begin with initial list of all arcs in the problem.
@@ -157,21 +156,64 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
-        raise NotImplementedError
+        # Deques are sequence-like data types designed as a generalization of stacks and queues. 
+        # They support memory-efficient and fast append and pop operations on both ends of the data structure.
+
+        queue = list()
+        if arcs is None:
+            for var1 in self.domains:
+                # for var2 in self.domains:
+                for var2 in self.crossword.neighbors(var1):
+                    if var1 != var2:
+                        queue.append((var1, var2))
+        else:
+            queue = arcs
+        
+        while queue:
+            x, y = queue.pop(0) # dequeue an arc from queue
+            if self.revise(x,y):
+                if len(self.domains[x]) == 0:
+                    return False
+                for z in (self.crossword.neighbors(x) - {y}):
+                    queue.append((z,x)) # enqueue an arc to queue
+        return True
 
     def assignment_complete(self, assignment):
         """
         Return True if `assignment` is complete (i.e., assigns a value to each
         crossword variable); return False otherwise.
         """
-        raise NotImplementedError
 
+        for var in self.crossword.variables:
+            if var not in assignment or not isinstance(assignment[var], str):
+                return False
+        return True
+                
     def consistent(self, assignment):
         """
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
-        raise NotImplementedError
+
+        # all values are distinct => values of a set are always distinct
+        if len(set(assignment.values())) != len(assignment): 
+            return False
+
+        for var in assignment:
+            # every value is the correct length according to the variable's length = if one value's length is incorrect, False
+            if var.length != len(assignment[var]):
+                return False
+        
+            # no conflicts between neighboring variables = if one conflict happens, False
+            for neighbor in self.crossword.neighbors(var):
+                if neighbor not in assignment:
+                    continue
+                i, j = self.crossword.overlaps[var, neighbor]
+                if assignment[var][i] != assignment[neighbor][j]:
+                    return False
+
+        # If satify all the constraints above
+        return True
 
     def order_domain_values(self, var, assignment):
         """
@@ -254,16 +296,31 @@ def test():
     #     if crossword.overlaps[cell]:
     #         print(f"{cell} => {crossword.overlaps[cell]}")
 
-    x = Variable(1, 7, 'down', 7)
-    y = Variable(4, 4, 'across', 5)
-    print(f"x = {creator.domains[x]}")
-    print(f"y = {creator.domains[y]}")
-    print(f"overlap = {crossword.overlaps[x, y]}")
+    # x = Variable(1, 7, 'down', 7)
+    # y = Variable(4, 4, 'across', 5)
+    # print(f"x = {creator.domains[x]}")
+    # print(f"y = {creator.domains[y]}")
+    # print(f"overlap = {crossword.overlaps[x, y]}")
     
-    print(creator.revise(x,y))
-    print(f"revised x = {creator.domains[x]}")
-    
+    # print(creator.revise(x,y))
+    # print(f"revised x = {creator.domains[x]}")    
 
+    # arcs = list()
+    # for var1 in creator.domains:
+    #     for var2 in creator.domains:
+    #         if var1 == var2:
+    #             continue
+    #         arcs.append((var1, var2))
+    # print(arcs[:3])
+    # print(arcs.pop(0))
+
+    # print(creator.domains)
+    # x = Variable(2, 1, 'across', 12)
+    # print(x)
+    # print(crossword.neighbors(x))
+    
+    creator.ac3()
+    # print(creator.domains)
     
 
 

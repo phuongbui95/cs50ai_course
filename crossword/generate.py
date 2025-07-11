@@ -222,7 +222,27 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-        raise NotImplementedError
+        
+        values_rule_out = {word: 0 for word in self.domains[var]}
+        
+        for word in self.domains[var]:
+            n = 0
+            for neighbor in self.crossword.neighbors(var):
+                overlap = self.crossword.overlaps[var, neighbor]
+                
+                # pass if the assigned neighbors or word is not overlapped
+                if neighbor in assignment or not overlap:
+                    continue
+                
+                i, j = overlap
+                for neighbor_word in self.domains[neighbor]:
+                    if word[i] != neighbor_word[j]:
+                        n += 1
+            
+            values_rule_out[word] = n
+        
+        return sorted(self.domains[var], key= values_rule_out.__getitem__)
+
 
     def select_unassigned_variable(self, assignment):
         """
@@ -232,7 +252,30 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        raise NotImplementedError
+
+        # unassigned variables and their domain sizes
+        unassigned_vars = {
+            var: len(self.domains[var])
+            for var in self.domains
+            if var not in assignment
+        }
+        
+         # Sort variables by domain size (MRV heuristic)
+        sorted_list = sorted(unassigned_vars.keys(), key=unassigned_vars.__getitem__)
+
+        # Check for ties
+        tie_list = [sorted_list[0]]
+        for var in sorted_list[1:]:
+            if len(self.domains[var]) == len(self.domains[sorted_list[0]]):
+                tie_list.append(var)
+        
+        # Break tie using degree heuristic
+        if len(tie_list) == 1:
+            return sorted_list[0]
+        else:
+            return max(tie_list, key=lambda var: len(self.crossword.neighbors(var)))
+
+
 
     def backtrack(self, assignment):
         """
@@ -319,9 +362,18 @@ def test():
     # print(x)
     # print(crossword.neighbors(x))
     
-    creator.ac3()
+    # creator.ac3()
     # print(creator.domains)
-    
+
+    # # pick a variable to test
+    # var = next(iter(creator.crossword.variables))
+
+    # # example partial assignment (empty)
+    # assignment = {}
+
+    # # test order_domain_values
+    # ordered_values = creator.order_domain_values(var, assignment)
+    # print(f"Domain values for {var} ordered by least constraining: {ordered_values}")    
 
 
 

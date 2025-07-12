@@ -1,7 +1,7 @@
 import sys
 
 from crossword import *
-
+import copy
 
 class CrosswordCreator():
 
@@ -91,7 +91,7 @@ class CrosswordCreator():
         """
         self.enforce_node_consistency()
         self.ac3()
-        return self.backtrack(dict())
+        return self.backtrack(dict()) # Note: this function starts with an empty dictionary
 
     def enforce_node_consistency(self): # unary constraints
         """
@@ -259,20 +259,22 @@ class CrosswordCreator():
             for var in self.domains
             if var not in assignment
         }
+
+        if not unassigned_vars:
+            return None
         
          # Sort variables by domain size (MRV heuristic)
         sorted_list = sorted(unassigned_vars.keys(), key=unassigned_vars.__getitem__)
 
         # Check for ties
-        tie_list = [sorted_list[0]]
-        for var in sorted_list[1:]:
-            if len(self.domains[var]) == len(self.domains[sorted_list[0]]):
-                tie_list.append(var)
+        min_domain_size = unassigned_vars[sorted_list[0]]
+        tie_list = [var for var in sorted_list if unassigned_vars[var] == min_domain_size]
         
         # Break tie using degree heuristic
         if len(tie_list) == 1:
             return sorted_list[0]
         else:
+            # Break tie by selecting variable with highest degree (most neighbors)
             return max(tie_list, key=lambda var: len(self.crossword.neighbors(var)))
 
 
@@ -286,9 +288,38 @@ class CrosswordCreator():
 
         If no assignment is possible, return None.
         """
-        raise NotImplementedError
+        
+        # Starting with the end in mind
+        if self.assignment_complete(assignment):
+            return assignment
+        
+        var = self.select_unassigned_variable(assignment)
+    
+        # Recurse on valid assignments for the selected variable
+        for word in self.order_domain_values(var, assignment):
+            # initialize an assignment
+            assignment[var] = word
+            if self.consistent(assignment):
+                # Save a copy of domains to restore after AC-3 modifies them
+                saved_domains = copy.deepcopy(self.domains)
 
+                # Specify only arcs affected by the new assignment to limit propagation
+                inferences = self.ac3(arcs=[(var, neighbor) for neighbor in self.crossword.neighbors(var)])
+                if inferences:
+                    result = self.backtrack(assignment)
+                    if result is not None:
+                        return result # Return completed assignment if recursive call succeeded
+                    
+                # # AC-3 failed, so undo domain pruning and try next word
+                self.domains = saved_domains
+            
+            # Backtrack: remove the assignment and try the next word
+            assignment.pop(var)
 
+        # No valid assignment found; return None to trigger backtracking
+        return None
+                
+                
 def main():
 
     # Check usage
@@ -313,70 +344,6 @@ def main():
         if output:
             creator.save(assignment, output)
 
-def test():
-
-    # Check usage
-    if len(sys.argv) not in [3, 4]:
-        sys.exit("Usage: python generate.py structure words [output]")
-
-    # Parse command-line arguments
-    structure = sys.argv[1]
-    words = sys.argv[2]
-    output = sys.argv[3] if len(sys.argv) == 4 else None
-
-    # Generate crossword
-    crossword = Crossword(structure, words)
-    creator = CrosswordCreator(crossword)
-    
-    # Test functions
-    creator.enforce_node_consistency()
-    
-    # for var in creator.domains:
-    #     print(f"{var} => {creator.domains[var]}")
-    #     print(f"{var} => {crossword.neighbors(var)}")
-    
-    # for cell in crossword.overlaps:
-    #     if crossword.overlaps[cell]:
-    #         print(f"{cell} => {crossword.overlaps[cell]}")
-
-    # x = Variable(1, 7, 'down', 7)
-    # y = Variable(4, 4, 'across', 5)
-    # print(f"x = {creator.domains[x]}")
-    # print(f"y = {creator.domains[y]}")
-    # print(f"overlap = {crossword.overlaps[x, y]}")
-    
-    # print(creator.revise(x,y))
-    # print(f"revised x = {creator.domains[x]}")    
-
-    # arcs = list()
-    # for var1 in creator.domains:
-    #     for var2 in creator.domains:
-    #         if var1 == var2:
-    #             continue
-    #         arcs.append((var1, var2))
-    # print(arcs[:3])
-    # print(arcs.pop(0))
-
-    # print(creator.domains)
-    # x = Variable(2, 1, 'across', 12)
-    # print(x)
-    # print(crossword.neighbors(x))
-    
-    # creator.ac3()
-    # print(creator.domains)
-
-    # # pick a variable to test
-    # var = next(iter(creator.crossword.variables))
-
-    # # example partial assignment (empty)
-    # assignment = {}
-
-    # # test order_domain_values
-    # ordered_values = creator.order_domain_values(var, assignment)
-    # print(f"Domain values for {var} ordered by least constraining: {ordered_values}")    
-
-
-
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    

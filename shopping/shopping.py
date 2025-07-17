@@ -96,7 +96,7 @@ def load_data(filename):
             ])
             labels.append(1 if row["Revenue"] == "TRUE" else 0)
     
-    return evidence, labels
+    return (evidence, labels)
 
 
 def train_model(evidence, labels):
@@ -104,7 +104,9 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
+    model = KNeighborsClassifier(n_neighbors=1)
+    model.fit(evidence, labels)
+    return model
 
 
 def evaluate(labels, predictions):
@@ -122,15 +124,47 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    sensitivity_count = 0
+    specificity_count = 0
+    # total = 0
+    for actual, predicted in zip(labels, predictions):
+        if actual == predicted:
+            # total += 1
+            if actual == 1:
+                sensitivity_count += 1 
+            else: 
+                specificity_count += 1
+    
+    return (sensitivity_count/sum(labels), specificity_count/(len(labels)-sum(labels)))
 
+    '''
+    true_positives = 0
+    true_negatives = 0
+    total_positives = 0
+    total_negatives = 0
+
+    for actual, predicted in zip(labels, predictions):
+        if actual == 1:
+            total_positives += 1
+            if predicted == 1:
+                true_positives += 1
+        else:
+            total_negatives += 1
+            if predicted == 0:
+                true_negatives += 1
+
+    sensitivity = true_positives / total_positives if total_positives else 0
+    specificity = true_negatives / total_negatives if total_negatives else 0
+
+    return (sensitivity, specificity)
+    '''
 
 if __name__ == "__main__":
-    # main()
+    main()
 
     # # Call the function with your CSV file
     # evidence, labels = load_data("shopping.csv")
-
+    
     # # Print the first 5 rows of evidence and labels
     # for i in range(5):
     #     print(f"Evidence: {evidence[i]}")

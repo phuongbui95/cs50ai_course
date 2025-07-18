@@ -101,7 +101,8 @@ class NimAI():
         Return the Q-value for the state `state` and the action `action`.
         If no Q-value exists yet in `self.q`, return 0.
         """
-        raise NotImplementedError
+        key = (tuple(state), action)
+        return self.q.get(key, 0)
 
     def update_q_value(self, state, action, old_q, reward, future_rewards):
         """
@@ -118,7 +119,9 @@ class NimAI():
         `alpha` is the learning rate, and `new value estimate`
         is the sum of the current reward and estimated future rewards.
         """
-        raise NotImplementedError
+        new_value_est = reward + future_rewards
+        new_q = old_q + self.alpha*(new_value_est - old_q)
+        self.q[tuple(state),action] = new_q
 
     def best_future_reward(self, state):
         """
@@ -130,7 +133,11 @@ class NimAI():
         Q-value in `self.q`. If there are no available actions in
         `state`, return 0.
         """
-        raise NotImplementedError
+        actions = Nim.available_actions(state)
+        if not actions:
+            return 0
+        
+        return max(self.get_q_value(state,action) for action in actions)
 
     def choose_action(self, state, epsilon=True):
         """
@@ -147,8 +154,22 @@ class NimAI():
         If multiple actions have the same Q-value, any of those
         options is an acceptable return value.
         """
-        raise NotImplementedError
 
+        actions = Nim.available_actions(state)
+        best_q = self.best_future_reward(state)
+        random_prob = random.random()
+
+
+        if epsilon == True and random_prob < self.epsilon:
+            return random.choice(list(actions))
+        
+        # else: epsilon == False or (epsilon == True and random_prob > self.epsilon):
+        tie_break_list = [action for action in actions if self.get_q_value(state,action) == best_q]
+        if len(tie_break_list) == 1:
+            return tie_break_list[0]
+        else:
+            return random.choice(tie_break_list)
+            
 
 def train(n):
     """

@@ -107,9 +107,11 @@ while True:
 
     # Generate classification
     if mouse and classifyButton.collidepoint(mouse):
-        classification = model.predict(
-            [np.array(handwriting).reshape(1, 28, 28, 1)]
-        ).argmax()
+        # Reshape handwriting data into a format suitable for the model.
+        # The model expects a batch of images, so we create a batch of 1.
+        # Shape should be (1, 28, 28, 1): 1 image, 28x28 pixels, 1 color channel.
+        handwriting_array = np.array(handwriting).reshape(1, 28, 28, 1)
+        classification = model.predict(handwriting_array, verbose=0).argmax()
 
     # Show classification if one exists
     if classification is not None:

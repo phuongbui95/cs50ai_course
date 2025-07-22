@@ -52,5 +52,12 @@ model.evaluate(x_test,  y_test, verbose=2)
 # Save model to file
 if len(sys.argv) == 2:
     filename = sys.argv[1]
+
+    # Ensure model is saved in the recommended Keras format.
+    if filename.endswith(".h5"):
+        filename = filename[:-3] + ".keras"
+    elif not filename.endswith(".keras"):
+        filename += ".keras"
+
     model.save(filename)
     print(f"Model saved to {filename}.")

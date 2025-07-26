@@ -16,6 +16,6 @@ def predict_sign(image_path):
     return np.argmax(prediction[0])
 
 # Test the model
-test_image = "/home/phuongbui/cs50/cs50ai_course/traffic/gtsrb-small/0/00000_00000.ppm"
+test_image = "/home/phuongbui/cs50/cs50ai_course/traffic/gtsrb/4/00000_00001.ppm"
 result = predict_sign(test_image)
 print(f"Predicted traffic sign category: {result}")

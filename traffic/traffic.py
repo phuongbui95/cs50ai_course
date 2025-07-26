@@ -81,8 +81,9 @@ def load_data(data_dir):
                         continue
 
                     resized_img = cv2.resize(img, (IMG_WIDTH, IMG_HEIGHT))
-                    
                     images.append(resized_img)
+                    # normalized_img = resized_img / 255.0  # Normalize pixel values
+                    # images.append(normalized_img)
                     labels.append(int(category))
                 
                 except Exception as e:
@@ -102,31 +103,27 @@ def get_model():
     """
     # Create a convolutional neural network
     input_shape = (IMG_WIDTH, IMG_HEIGHT, 3)
-    filters = 32 # 64, 128
-    kernel_size = (3, 3)
-    pool_size = (2,2)
-    dropout_rate = 0.5 # (0.2 to 0.5)
-
+    # filters: 32, 64, 128
     # Basic CNN Structure: Conv2D → MaxPooling → Dropout → Flatten → Dense
     model = tf.keras.models.Sequential([
 
-        # Convolutional layer
-        tf.keras.layers.Conv2D(
-            filters, kernel_size, activation="relu", input_shape=input_shape
-        ),
+        # First conv block
+        tf.keras.layers.Conv2D(32, (3, 3), activation="relu", input_shape=input_shape),
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        
+        # Second conv block
+        tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+        
+        # Third conv block
+        tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
 
-        # Max-pooling layer, using 2x2 pool size
-        tf.keras.layers.MaxPooling2D(pool_size=pool_size),
-
-        # Add a hidden layer with dropout
-        tf.keras.layers.Dropout(dropout_rate),
-
-        # Flatten units
+        # Other layers and setup
+        tf.keras.layers.Dropout(0.5),
         tf.keras.layers.Flatten(),
-
-        # Add an output layer
         tf.keras.layers.Dense(128, activation="relu"),
-        tf.keras.layers.Dropout(0.3), # why?
+        tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")
     ])
 

@@ -1,0 +1,9 @@
+# Ignore datasets
+sentences/
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore system files
+.DS_Store

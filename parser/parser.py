@@ -1,5 +1,6 @@
 import nltk
 import sys
+import string
 
 TERMINALS = """
 Adj -> "country" | "dreadful" | "enigmatical" | "little" | "moist" | "red"
@@ -15,7 +16,20 @@ V -> "smiled" | "tell" | "were"
 """
 
 NONTERMINALS = """
-S -> N V
+S -> NP VP | S Conj S
+
+# Noun Phrase rules
+NP -> Det N | N | Det NP | AP NP | N PP
+
+# Adjective Phrase rule: one or more adjectives
+AP -> Adj | Adj AP
+
+# Prepositional Phrase rule
+PP -> P NP
+
+# Verb Phrase rules
+VP -> V | V NP | V PP | V NP PP | VP Adv | VP Conj VP | Adv VP
+
 """
 
 grammar = nltk.CFG.fromstring(NONTERMINALS + TERMINALS)
@@ -62,7 +76,17 @@ def preprocess(sentence):
     and removing any word that does not contain at least one alphabetic
     character.
     """
-    raise NotImplementedError
+
+    if not sentence:
+        return []
+    
+    # Convert to lowercase and split into words
+    words = nltk.word_tokenize(sentence.lower()) # ntlk.word_tokenize will remove non-letter automatically
+    
+    # Keep only words with at least one alphabetic character
+    return [word for word in words 
+            if any(c.isalpha() for c in word)
+        ]
 
 
 def np_chunk(tree):
@@ -72,7 +96,19 @@ def np_chunk(tree):
     whose label is "NP" that does not itself contain any other
     noun phrases as subtrees.
     """
-    raise NotImplementedError
+    chunks = []
+
+    # The subtrees() method provides an iterator over all subtrees.
+    # We can use its filter argument to only consider subtrees labeled "NP".
+    for subtree in tree.subtrees(filter=lambda t: t.label() == "NP"):
+
+        # A subtree is a "chunk" if it doesn't contain other NP subtrees.
+        # We check this by seeing if any of its immediate children are also NPs.
+        if not any(isinstance(child, nltk.Tree) and child.label() == "NP"
+                   for child in subtree):
+            chunks.append(subtree)
+
+    return chunks
 
 
 if __name__ == "__main__":
